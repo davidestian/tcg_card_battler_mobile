@@ -2,20 +2,21 @@ import { getUserDetail } from "@/src/api/account/service";
 import { storeGetAllBooster } from "@/src/api/store/service";
 import { Booster } from "@/src/api/store/type";
 import ConfirmationModalComponent from "@/src/components/general/ConfirmationModalComponent";
-import BoosterDetailModalComponent from "@/src/components/mainMenu/inventoryMenu/storeMenu/boosterMenu/BoosterDetailModalComponent";
+import GeneralHeaderBarComponent from "@/src/components/general/GeneralHeaderBarComponent";
+import LoadingModalComponent from "@/src/components/general/LoadingModalComponent";
+import { getUnitCardImagePath } from "@/src/services/generalService";
 import { gs } from "@/src/styles/globalStyles";
 import { ConfirmationModalData } from "@/src/types/general/confirmationType";
+import { Image } from "expo-image";
 import { router, useFocusEffect } from "expo-router";
-import { PackageOpen } from "lucide-react-native";
 import { memo, useCallback, useState } from "react";
-import { FlatList, ListRenderItem, Pressable, Text, View } from "react-native";
+import { FlatList, ListRenderItem, Pressable, StyleSheet, Text, View } from "react-native";
 
 const StoreMenuBoosterIndex = memo(() => {
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [boosters, setBoosters] = useState<Booster[]>([]);
     const [listHeight, setListHeight] = useState(0);
     const [selectedBoosterIndex, setSelectedBoosterIndex] = useState(-1);
-    const [isShowDetail, setIsShowDetail] = useState(false);
     const [isShowConfirmation, setIsShowConfirmation] = useState(false);
     const [selectedQTY, setSelectedQTY] = useState(0);
     const [gold, setGold] = useState(0n);
@@ -26,13 +27,24 @@ const StoreMenuBoosterIndex = memo(() => {
     });
 
     const init = useCallback(async () => {
-        const res = await storeGetAllBooster();
-        if (!res.success) { }
+        const [boosterRes, goldRes] = await Promise.all([
+            storeGetAllBooster(5),
+            getUserDetail()
+        ]);
+
+        if (!boosterRes.success || !goldRes.success) { return; }
+        for (let i = 0; i < boosterRes.data.boosters.length; i++) {
+            for (let j = 0; j < boosterRes.data.boosters[i].boosterCards.length; j++) {
+                boosterRes.data.boosters[i].boosterCards[j].imgURL = await getUnitCardImagePath(
+                    boosterRes.data.boosters[i].boosterCards[j].origin,
+                    boosterRes.data.boosters[i].boosterCards[j].cardCode,
+                    boosterRes.data.boosters[i].boosterCards[j].imageTypeNumber);
+            }
+        }
 
         setSelectedBoosterIndex(-1);
-        setIsShowDetail(false);
-        setBoosters(res.data.boosters);
-        await getGold();
+        setBoosters(boosterRes.data.boosters);
+        setGold(goldRes.data.gold);
     }, []);
 
     useFocusEffect(useCallback(() => {
@@ -40,10 +52,10 @@ const StoreMenuBoosterIndex = memo(() => {
         init().finally(() => setIsLoading(false));
     }, [init]));
 
-    const ITEM_HEIGHT = listHeight / 4;
+    const ITEM_HEIGHT = listHeight / 3;
     const renderItem: ListRenderItem<Booster> = useCallback(({ item, index }) => {
         const onLongPress = () => {
-            showBoosterDetail(index)
+            showBoosterDetail(item.boosterCode, item.boosterName, item.price);
         };
 
         const onPress1 = () => {
@@ -66,29 +78,52 @@ const StoreMenuBoosterIndex = memo(() => {
 
         return (
             <View style={[{ height: ITEM_HEIGHT, width: '100%' }, gs.all_center, gs.p5]}>
-                <Pressable style={[gs.full_size, gs.border_card, gs.all_center, gs.p5]}
+                <Pressable style={[gs.f3, gs.full_size, gs.border_card, gs.all_center]}
                     onLongPress={onLongPress}
                     accessibilityLabel="button">
-                    <View style={[gs.f1, gs.all_center]}>
+                    <View style={[gs.f2, gs.column]}>
+                        <View style={[gs.f1]}>
+                            <Image source={item.boosterCards[3].imgURL}
+                                contentFit="cover"
+                                style={[gs.full_size]} />
+                        </View>
+                        <View style={[gs.f1]}>
+                            <Image source={item.boosterCards[1].imgURL}
+                                contentFit="cover"
+                                style={[gs.full_size]} />
+                        </View>
+                        <View style={[gs.f1]}>
+                            <Image source={item.boosterCards[0].imgURL}
+                                contentFit="cover"
+                                style={[gs.full_size]} />
+                        </View>
+                        <View style={[gs.f1]}>
+                            <Image source={item.boosterCards[2].imgURL}
+                                contentFit="cover"
+                                style={[gs.full_size]} />
+                        </View>
+                        <View style={[gs.f1]}>
+                            <Image source={item.boosterCards[4].imgURL}
+                                contentFit="cover"
+                                style={[gs.full_size]} />
+                        </View>
+                    </View>
+                    <View style={[{ height: '20%' }, gs.f1, gs.all_center, styles.topBanner]}>
                         <Text>{item.boosterCode} - {item.boosterName}</Text>
                     </View>
-                    <View style={[gs.f2]}>
-                    </View>
-                    <View style={[gs.f2, gs.column]}>
-                        <Pressable style={[gs.f1, gs.p5]}
+                    <View style={[{ height: '20%' }, gs.column, styles.bottomBanner]}>
+                        <Pressable style={[gs.f1]}
                             onPress={onPress1}
                             accessibilityLabel="button">
-                            <View style={[gs.full_size, gs.all_center, gs.border_card]}>
-                                <Text>BUY 1</Text>
-                                <Text>{item.price} G</Text>
+                            <View style={[gs.full_size, gs.all_center, gs.border_right]}>
+                                <Text style={[gs.fontM]}>BUY 1 ({item.price} G)</Text>
                             </View>
                         </Pressable>
-                        <Pressable style={[gs.f1, gs.all_center, gs.p5]}
+                        <Pressable style={[gs.f1]}
                             onPress={onPress10}
                             accessibilityLabel="button">
-                            <View style={[gs.full_size, gs.all_center, gs.border_card]}>
-                                <Text>BUY 10</Text>
-                                <Text>{item.price * 10} G</Text>
+                            <View style={[gs.full_size, gs.all_center]}>
+                                <Text style={[gs.fontM]}>BUY 10 ({item.price * 10} G)</Text>
                             </View>
                         </Pressable>
                     </View>
@@ -112,16 +147,6 @@ const StoreMenuBoosterIndex = memo(() => {
         setIsShowConfirmation(false);
     }, []);
 
-    const getGold = useCallback(async () => {
-        const res = await getUserDetail();
-        if (!res.success) return
-
-        setGold((res.data.gold));
-    }, []);
-
-    const openPack = useCallback((boosterCode: string, qty: number) => {
-    }, [router]);
-
     const onConfirmBuyPack = useCallback(() => {
         var booster = boosters[selectedBoosterIndex];
         router.push({
@@ -133,32 +158,30 @@ const StoreMenuBoosterIndex = memo(() => {
         setIsShowConfirmation(false);
     }, [router, boosters, selectedBoosterIndex, selectedQTY]);
 
-    const onCloseBoosterDetail = useCallback(() => {
-        setSelectedBoosterIndex(-1);
-        setIsShowDetail(false);
-    }, []);
-
-    const showBoosterDetail = useCallback((idx: number) => {
-        setSelectedBoosterIndex(idx);
-        setIsShowDetail(true);
+    const showBoosterDetail = useCallback((boosterCode: string, boosterName: string, price: number) => {
+        router.push({
+            pathname: '/main-menu/store-menu/booster-menu/booster-detail-screen',
+            params: {
+                boosterCodeParam: boosterCode,
+                boosterNameParam: boosterName,
+                priceParam: price
+            }
+        });
     }, []);
 
     return (
         <View style={[gs.full_size, gs.all_center, gs.row]}>
-            <View style={[gs.f1, gs.all_center, gs.column]} >
+            <View style={[gs.f1]} >
+                <GeneralHeaderBarComponent title="BOOSTERS"></GeneralHeaderBarComponent>
+            </View>
+            <View style={[gs.f05, gs.all_center, gs.column]} >
                 <View style={[gs.f1, gs.all_center]}>
-                </View>
-                <View style={[gs.f2, gs.all_center, gs.column]}>
-                    <PackageOpen />
-                    <Text> BOOSTER</Text>
-                </View>
-                <View style={[gs.f1, gs.all_center]}>
-                    <Text> G : {gold}</Text>
+                    <Text style={[gs.fontM]}> G : {gold}</Text>
                 </View>
             </View>
-            {!isLoading &&
-                <View style={[gs.f9, gs.full_size]}
-                    onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}>
+            <View style={[gs.f9, gs.full_size]}
+                onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}>
+                {listHeight > 0 &&
                     <FlatList
                         data={boosters}
                         numColumns={1}
@@ -166,25 +189,37 @@ const StoreMenuBoosterIndex = memo(() => {
                         keyExtractor={(item) => item.boosterCode}
                         extraData={boosters}
                     />
-                </View>
-            }
-
-            {selectedBoosterIndex > -1 && isShowDetail &&
-                <BoosterDetailModalComponent
-                    boosterCode={boosters[selectedBoosterIndex].boosterCode}
-                    boosterName={boosters[selectedBoosterIndex].boosterName}
-                    price={boosters[selectedBoosterIndex].price}
-                    onClose={onCloseBoosterDetail} />
-            }
-
-            {selectedBoosterIndex > -1 && isShowConfirmation &&
-                <ConfirmationModalComponent
-                    data={confirmationModalData}
-                    onClose={onCloseBuyPack}
-                    onConfirm={onConfirmBuyPack} />
-            }
+                }
+            </View>
+            <ConfirmationModalComponent
+                visible={selectedBoosterIndex > -1 && isShowConfirmation}
+                data={confirmationModalData}
+                onClose={onCloseBuyPack}
+                onConfirm={onConfirmBuyPack} />
+            <LoadingModalComponent visible={isLoading}></LoadingModalComponent>
         </View>
     );
+});
+
+const styles = StyleSheet.create({
+    bottomBanner: {
+        position: 'absolute', // This positions the view relative to the cardContainer
+        bottom: 0,            // Anchors it to the bottom edge
+        width: '100%',        // Makes it span the full width
+        alignItems: 'center', // Centers text horizontally
+        justifyContent: 'center',
+        textAlign: 'center',
+        backgroundColor: 'rgba(255,255,255,0.7)'
+    },
+    topBanner: {
+        position: 'absolute', // This positions the view relative to the cardContainer
+        top: 0,            // Anchors it to the bottom edge
+        width: '100%',        // Makes it span the full width
+        alignItems: 'center', // Centers text horizontally
+        justifyContent: 'center',
+        textAlign: 'center',
+        backgroundColor: 'rgba(255,255,255,0.7)'
+    }
 });
 
 export default StoreMenuBoosterIndex;

@@ -161,7 +161,7 @@ export const gs = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.5)', // Optional: Dim background
     },
     header: {
-        backgroundColor: 'rgb(191, 191, 191)',
+        backgroundColor: 'rgba(0,0,0,0.2)',
     },
     text_center: {
         textAlign: 'center'

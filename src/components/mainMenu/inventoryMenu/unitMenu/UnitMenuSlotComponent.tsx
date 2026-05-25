@@ -8,15 +8,13 @@ interface props {
     playerUnitID: string;
     imageUrl: string;
     level: number;
-    onPressSlot: (playerUnitCode: string) => void;
+    onPressSlot: (playerUnitCode: string, unitLevel: number) => void;
 }
 
 const UnitMenuSlotComponent = memo(({ playerUnitID, imageUrl, level, onPressSlot }: props) => {
-
     const onPress = () => {
-        onPressSlot(playerUnitID);
+        onPressSlot(playerUnitID, level);
     }
-
     return (
         <View style={[gs.full_size, gs.p5]}>
             {imageUrl !== '' &&
@@ -28,8 +26,8 @@ const UnitMenuSlotComponent = memo(({ playerUnitID, imageUrl, level, onPressSlot
                     />
 
                     <View style={styles.bottomBanner}>
-                        <Text style={styles.textOnlyBackground}>
-                            lvl. {level}
+                        <Text style={[styles.textOnlyBackground, gs.fontS]}>
+                            {level}
                         </Text>
                     </View>
                 </Pressable>

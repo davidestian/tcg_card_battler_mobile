@@ -3,12 +3,13 @@ import { PlayerUnit } from "@/src/api/inventory/type";
 import { PostPlayerTeam } from "@/src/api/team/service";
 import CardComponent from "@/src/components/general/CardComponent";
 import FooterListViewComponent from "@/src/components/general/FooterListViewComponent";
+import GeneralHeaderBarComponent from "@/src/components/general/GeneralHeaderBarComponent";
 import LoadingModalComponent from "@/src/components/general/LoadingModalComponent";
 import MessageModalComponent from "@/src/components/general/MessageModalComponent";
 import { getUnitCardImagePath } from "@/src/services/generalService";
 import { gs } from "@/src/styles/globalStyles";
 import { router } from "expo-router";
-import { ArrowLeftIcon, EditIcon } from "lucide-react-native";
+import { EditIcon } from "lucide-react-native";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { FlatList, ListRenderItem, Pressable, Text, TextInput, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
@@ -32,7 +33,7 @@ const PlayerUnitSlot = memo(({ imgURL, level, isSelected, index, element1, eleme
             accessibilityLabel="button">
             <CardComponent
                 imgURL={imgURL}
-                footerText={level === 0 ? '' : `lvl. ${level}`}
+                footerText={level === 0 ? '' : `${level}`}
                 elements={[element1, element2]}
             />
         </Pressable>
@@ -53,12 +54,12 @@ const UnitCard = memo(({ imgURL, playerUnitID, level, h, element1, element2, onC
     }
 
     return (
-        <Pressable style={[{ width: '20%', height: h }, gs.p5]}
+        <Pressable style={[{ width: '25%', height: h }, gs.p5]}
             onPress={handlePress}
             accessibilityLabel="button">
             <CardComponent
                 imgURL={imgURL}
-                footerText={`lvl. ${level}`}
+                footerText={`${level}`}
                 elements={[element1, element2]}
             />
         </Pressable>
@@ -68,7 +69,7 @@ const UnitCard = memo(({ imgURL, playerUnitID, level, h, element1, element2, onC
 const TeamMenuScreenIndex = memo(() => {
     const [isLoading, setIsLoading] = useState(true);
     const [currPage, setCurrPage] = useState(1);
-    const [totalPage, setTotalPage] = useState(0);
+    const [totalPage, setTotalPage] = useState(1);
     const [message, setMessage] = useState('');
     const [listHeight, setListHeight] = useState(0);
     const teamNameRef = useRef('');
@@ -111,7 +112,7 @@ const TeamMenuScreenIndex = memo(() => {
     const fetchData = useCallback(async (page: number) => {
         setIsLoading(true);
         try {
-            const res = await invGetPlayerUnits(20, page);
+            const res = await invGetPlayerUnits(12, page);
             if (!res.success) {
                 setMessage(res.message);
                 return;
@@ -129,9 +130,7 @@ const TeamMenuScreenIndex = memo(() => {
             setTotalPage(res.data.totalPage);
         }
         finally {
-            setTimeout(() => {
-                setIsLoading(false);
-            }, 500);
+            setIsLoading(false);
         }
 
     }, []);
@@ -204,7 +203,7 @@ const TeamMenuScreenIndex = memo(() => {
         });
     }, []);
 
-    const ITEM_HEIGHT = listHeight / 4;
+    const ITEM_HEIGHT = listHeight / 3;
     const renderItem: ListRenderItem<PlayerUnit> = useCallback(({ item }) => {
         return (
             <UnitCard
@@ -263,27 +262,16 @@ const TeamMenuScreenIndex = memo(() => {
             onBackPress();
         }
         finally {
-            setTimeout(() => {
-                setIsLoading(false);
-            }, 1000);
+            setIsLoading(false);
         }
     };
 
     return (
         <Animated.View entering={FadeIn.delay(500)} style={[gs.full_size, gs.all_center, gs.row]}>
-            <View style={[gs.f1, gs.column, gs.header, gs.full_size]}>
-                <Pressable style={[gs.f1, gs.all_center, gs.full_size]}
-                    onPress={onBackPress}
-                    accessibilityLabel="button">
-                    <ArrowLeftIcon />
-                </Pressable>
-                <View style={[gs.f2, gs.all_center, gs.full_size]}>
-                    <Text> CREATE TEAM</Text>
-                </View>
-                <View style={[gs.f1, gs.all_center, gs.full_size]}>
-                </View>
+            <View style={[gs.f1]}>
+                <GeneralHeaderBarComponent title="CREATE TEAM" />
             </View>
-            <View style={[gs.f4, gs.p5, gs.all_center]}>
+            <View style={[gs.f3, gs.p5, gs.all_center]}>
                 <View style={[gs.f2, gs.all_center, gs.column]}>
                     <View style={[gs.f2, gs.all_center]}>
                         <EditIcon />
@@ -295,7 +283,7 @@ const TeamMenuScreenIndex = memo(() => {
                             returnKeyType="next"></TextInput>
                     </View>
                 </View>
-                <View style={[gs.f5, gs.all_center, gs.full_size, gs.column, gs.p5]}>
+                <View style={[gs.f5, gs.all_center, gs.full_size, gs.column]}>
                     <PlayerUnitSlot index={0}
                         isSelected={selectedSlotIndex == 0}
                         imgURL={playerUnits[0].imgURL}
@@ -318,22 +306,6 @@ const TeamMenuScreenIndex = memo(() => {
                         element2={playerUnits[2].elementID2}
                         onPress={onSlotPress} />
                 </View>
-                <View style={[gs.f1, gs.column]}>
-                    <View style={[gs.f2, gs.px5]}>
-                        <Pressable style={[gs.f2, gs.all_center, gs.border_card]}
-                            onPress={onResetPress}
-                            accessibilityLabel="button">
-                            <Text>RESET</Text>
-                        </Pressable>
-                    </View>
-                    <View style={[gs.f2]}>
-                        <Pressable style={[gs.f2, gs.all_center, gs.border_card]}
-                            onPress={onSubmitPress}
-                            accessibilityLabel="button">
-                            <Text>CREATE</Text>
-                        </Pressable>
-                    </View>
-                </View>
             </View>
             <View style={[gs.f5, gs.all_center, gs.p5, gs.full_size, gs.border_top]}>
                 <View style={[gs.full_size]}
@@ -342,7 +314,7 @@ const TeamMenuScreenIndex = memo(() => {
                         <FlatList
                             data={units}
                             renderItem={renderItem}
-                            numColumns={5}
+                            numColumns={4}
                             keyExtractor={(item) => item.playerUnitID}>
                         </FlatList>
                     }
@@ -355,8 +327,24 @@ const TeamMenuScreenIndex = memo(() => {
                     onNextPress={onNextPress}
                     onPrevPress={onPrevPress} />
             </View>
+            <View style={[gs.f1, gs.column, gs.p5]}>
+                <View style={[gs.f2, gs.px5]}>
+                    <Pressable style={[gs.f2, gs.all_center, gs.border_card]}
+                        onPress={onResetPress}
+                        accessibilityLabel="button">
+                        <Text style={[gs.fontM]}>RESET</Text>
+                    </Pressable>
+                </View>
+                <View style={[gs.f2]}>
+                    <Pressable style={[gs.f2, gs.all_center, gs.border_card, { backgroundColor: 'red' }]}
+                        onPress={onSubmitPress}
+                        accessibilityLabel="button">
+                        <Text style={[gs.fontM, { color: 'white' }]}>CREATE</Text>
+                    </Pressable>
+                </View>
+            </View>
             <MessageModalComponent message={message} onClose={onMessageModalClose} />
-            {isLoading && <LoadingModalComponent />}
+            <LoadingModalComponent visible={isLoading} />
         </Animated.View>)
 });
 

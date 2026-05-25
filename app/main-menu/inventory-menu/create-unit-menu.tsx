@@ -1,11 +1,12 @@
 import { invGetEligibleUnitsToCreate } from "@/src/api/inventory/service";
 import { EligibleUnit } from "@/src/api/inventory/type";
+import GeneralHeaderBarComponent from "@/src/components/general/GeneralHeaderBarComponent";
 import LoadingModalComponent from "@/src/components/general/LoadingModalComponent";
 import { getUnitCardImagePath } from "@/src/services/generalService";
 import { gs } from "@/src/styles/globalStyles";
 import { Image } from "expo-image";
 import { router, useFocusEffect } from "expo-router";
-import { ArrowLeftIcon, ChevronLeftCircleIcon, ChevronRightCircleIcon } from "lucide-react-native";
+import { ChevronLeftCircleIcon, ChevronRightCircleIcon } from "lucide-react-native";
 import { memo, useCallback, useState } from "react";
 import { FlatList, ListRenderItem, Pressable, Text, View } from "react-native";
 
@@ -16,40 +17,31 @@ interface filter {
 
 const CreateUnitMenu = memo(() => {
     const [isLoading, setIsLoading] = useState(true);
-    const [loadingMessage, setLoadingMessage] = useState('');
 
     const [listHeight, setListHeight] = useState(0);
     const [units, setUnits] = useState<EligibleUnit[]>([]);
     const [currPage, setCurrPage] = useState(1);
-    const [totalPage, setTotalPage] = useState(0);
+    const [totalPage, setTotalPage] = useState(1);
 
     const fectEligibleUnits = useCallback(async (limit: number, page: number) => {
-        if (page === 0) return;
         setIsLoading(true);
-        setLoadingMessage('Loading Eligible Units...');
+        if (page === 0) return;
+
         try {
             const res = await invGetEligibleUnitsToCreate(limit, page);
             if (!res.success) {
                 return;
             }
 
-            const updatedItems: EligibleUnit[] = await Promise.all(res.data.units.map(async (unit) => {
-                return {
-                    ...unit,
-                    imgURL: await getUnitCardImagePath(unit.origin, unit.unitCode, 0)
-                }
-            }));
+            for (let i = 0; i < res.data.units.length; i++) {
+                res.data.units[i].imgURL = await getUnitCardImagePath(res.data.units[i].origin, res.data.units[i].unitCode, 0);
+            }
 
-            setTimeout(() => {
-                setUnits(updatedItems);
-                setTotalPage(res.data.totalPage)
-            }, 800);
+            setUnits(res.data.units);
+            setTotalPage(res.data.totalPage)
         }
         finally {
-            setTimeout(() => {
-                setIsLoading(false);
-                setLoadingMessage('');
-            }, 1000);
+            setIsLoading(false);
         }
     }, []);
 
@@ -92,10 +84,6 @@ const CreateUnitMenu = memo(() => {
         );
     });
 
-    const onBackPress = useCallback(() => {
-        router.dismiss();
-    }, []);
-
     const onNextPress = () => {
         if (isLoading) return;
         setCurrPage((prev) => Math.min(prev + 1, totalPage))
@@ -108,16 +96,8 @@ const CreateUnitMenu = memo(() => {
 
     return (
         <View style={[gs.full_size]}>
-            <View style={[gs.f1, gs.header, gs.all_center, gs.column]}>
-                <Pressable style={[gs.f1, gs.all_center]}
-                    onPress={onBackPress}
-                    accessibilityLabel="button">
-                    <ArrowLeftIcon />
-                </Pressable>
-                <View style={[gs.f2, gs.all_center]}>
-                    <Text>CREATE UNIT</Text>
-                </View>
-                <View style={[gs.f1, gs.all_center]}></View>
+            <View style={[gs.f1]}>
+                <GeneralHeaderBarComponent title="CREATE UNIT"></GeneralHeaderBarComponent>
             </View>
             <View style={[gs.f9, gs.full_size]}>
                 <View style={[gs.full_size]}>
@@ -158,9 +138,7 @@ const CreateUnitMenu = memo(() => {
                     </View>
                 </View>
             </View>
-            {isLoading &&
-                <LoadingModalComponent />
-            }
+            <LoadingModalComponent visible={isLoading} />
         </View>
     )
 });

@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import { CircleQuestionMarkIcon } from "lucide-react-native";
 import { memo } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { GBox } from "./GradientBoxComponent";
+import { GBox } from "./GBoxComponent";
 
 interface props {
     imgURL?: string;
@@ -28,7 +28,7 @@ const CardComponent = memo(({ imgURL = '', footerText = '', elements }: props) =
                     />
                     {footerText !== '' &&
                         <View style={styles.bottomBanner}>
-                            <Text style={styles.textOnlyBackground}>
+                            <Text style={[gs.fontM, styles.textOnlyBackground]}>
                                 {footerText}
                             </Text>
                         </View>

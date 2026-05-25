@@ -17,4 +17,26 @@ export enum ElementEnum {
     Dark = 16,
     Steel = 17,
     Fairy = 18,
-}
+};
+
+export const ElementDatas: string[] = [
+    "None",
+    "Normal",
+    "Fire",
+    "Water",
+    "Electric",
+    "Grass",
+    "Ice",
+    "Fighting",
+    "Poison",
+    "Ground",
+    "Flying",
+    "Psychic",
+    "Bug",
+    "Rock",
+    "Ghost",
+    "Dragon",
+    "Dark",
+    "Steel",
+    "Fairy",
+] 

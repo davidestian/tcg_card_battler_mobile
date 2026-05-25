@@ -1,3 +1,12 @@
+export interface FilterPlayerUnit {
+    name: string;
+    level: number;
+    lastUnitLevel: number;
+    origin: string;
+    element1: number;
+    element2: number;
+    sort: number;
+}
 export interface InvGetPlayerUnitRS {
     totalPage: number;
     units: PlayerUnit[];
@@ -21,8 +30,9 @@ export interface InvGetPlayerUnitDetailByIDRS {
     origin: string;
     unitName: string;
     playerUnitLevel: number;
-    tags: string[];
     imageTypeNumber: number;
+    elementID1: number;
+    elementID2: number;
 }
 
 export interface InvGetPlayerCardByUnitCodeRS {
@@ -68,6 +78,8 @@ export interface InvGetPlayerUnitPrevLevelRS {
     technique: number;
     speed: number;
     spirit: number;
+    elementID1: number;
+    elementID2: number;
     imgURL: string;
 }
 
@@ -92,6 +104,7 @@ export interface PlayerCard {
     cardRarityCode: string;
     price: number;
     imgURL: string;
+    currQTY: number;
 }
 
 export interface invGetEligibleUnitsToCreateRS {

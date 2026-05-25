@@ -74,9 +74,9 @@ const OpenPackResultMModalComopnent = memo(({ isShow, cards, onClose }: props) =
     const ITEM_HEIGHT = listHeight / 3.5;
     const headerList: ListRenderItem<GroupedRarity> = useCallback(({ item }) => {
         return (
-            <View style={[{ height: ITEM_HEIGHT, width: '100%' }, gs.all_center, gs.p5, gs.border_bottom]}>
+            <View style={[{ height: ITEM_HEIGHT, width: '100%' }, gs.p5]}>
                 <View style={[gs.f2, gs.full_size, gs.all_center]}>
-                    <Text>
+                    <Text style={[gs.fontM, gs.border_bottom]}>
                         {item.rarityCode}
                     </Text>
                 </View>
@@ -108,8 +108,8 @@ const OpenPackResultMModalComopnent = memo(({ isShow, cards, onClose }: props) =
             visible={isShow}>
             {!isLoading &&
                 <SafeAreaView style={[gs.full_size]}>
-                    <View style={[gs.f05, gs.all_center, gs.header]}>
-                        <Text>
+                    <View style={[gs.f1, gs.all_center, gs.header]}>
+                        <Text style={[gs.fontM]}>
                             RESULT PACK
                         </Text>
                     </View>
@@ -128,7 +128,7 @@ const OpenPackResultMModalComopnent = memo(({ isShow, cards, onClose }: props) =
                     </View>
                     <Pressable style={[gs.f05, gs.all_center]}
                         onPress={onClose}>
-                        <Text>
+                        <Text style={[gs.fontM, { color: 'red' }]}>
                             CLOSE
                         </Text>
                     </Pressable>

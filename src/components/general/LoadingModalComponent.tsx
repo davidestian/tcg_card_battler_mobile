@@ -1,11 +1,23 @@
 import { gs } from "@/src/styles/globalStyles";
 import { memo } from "react";
-import { StyleSheet, View } from "react-native";
+import { ActivityIndicator, Modal, StyleSheet, Text, View } from "react-native";
 
-const LoadingModalComponent = memo(() => {
+const LoadingModalComponent = memo(({ visible, message }: {
+    visible: boolean;
+    message?: string;
+}) => {
     return (
-        <View style={[gs.full_size, styles.overlay]}>
-        </View>
+        <Modal
+            visible={visible}
+            transparent
+            animationType="fade">
+            <View style={[gs.full_size, styles.overlay, gs.all_center]}>
+                <ActivityIndicator size="large" color='white' />
+                {message !== undefined && message !== '' &&
+                    <Text style={[gs.fontM]}>{message}</Text>
+                }
+            </View>
+        </Modal>
     )
 });
 

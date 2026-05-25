@@ -2,6 +2,7 @@ import { getUserDetail } from "@/src/api/account/service";
 import { GetAccountDetailResponse } from "@/src/api/account/type";
 import { GetActivePlayerTeamID, GetPlayerTeamByTeamID } from "@/src/api/team/service";
 import { PlayerTeam } from "@/src/api/team/type";
+import LoadingModalComponent from "@/src/components/general/LoadingModalComponent";
 import { MyText } from "@/src/components/general/MyText";
 import SettingModalComponent from "@/src/components/general/SettingModalComponent";
 import { TeamSummaryComponent } from "@/src/components/general/TeamSummaryComponent";
@@ -15,26 +16,29 @@ import { Pressable, View } from "react-native";
 const Index = memo(() => {
     const [account, setAccount] = useState<GetAccountDetailResponse>({
         accountID: '',
-        accountEXP: 0n,
-        accountLevel: 0, accountName: '',
+        accountName: '',
         email: '',
         gold: 0n
     });
 
-    const [showSettins, setShowSettings] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
     const [team, setTeam] = useState<PlayerTeam>();
+    const [isLoading, setIsLoading] = useState(false);
 
     useFocusEffect(useCallback(() => {
+        setIsLoading(true);
         setShowSettings(false);
         setTeam(undefined);
         init();
     }, []));
 
-    const getAccountDetail = useCallback(async () => {
+    const getAccountDetail = useCallback(async (): Promise<boolean> => {
         const res = await getUserDetail();
-        if (!res.success) return;
+        if (!res.success) return false;
 
         setAccount(res.data);
+
+        return true;
     }, []);
 
     const getActivePlayerTeam = useCallback(async () => {
@@ -44,25 +48,23 @@ const Index = memo(() => {
         const resTeam = await GetPlayerTeamByTeamID(res.data);
         if (!resTeam.success) return;
 
-        const [img1, img2, img3] = await Promise.all([
-            getUnitCardImagePath(resTeam.data.playerUnit1.origin, resTeam.data.playerUnit1.unitCode, resTeam.data.playerUnit1.imageTypeNumber),
-            getUnitCardImagePath(resTeam.data.playerUnit2.origin, resTeam.data.playerUnit2.unitCode, resTeam.data.playerUnit2.imageTypeNumber),
-            getUnitCardImagePath(resTeam.data.playerUnit3.origin, resTeam.data.playerUnit3.unitCode, resTeam.data.playerUnit3.imageTypeNumber)
-        ]);
-
-        resTeam.data.playerUnit1.imgURL = img1;
-        resTeam.data.playerUnit2.imgURL = img2;
-        resTeam.data.playerUnit3.imgURL = img3;
+        resTeam.data.playerUnit1.imgURL = await getUnitCardImagePath(resTeam.data.playerUnit1.origin, resTeam.data.playerUnit1.unitCode, resTeam.data.playerUnit1.imageTypeNumber);
+        resTeam.data.playerUnit2.imgURL = await getUnitCardImagePath(resTeam.data.playerUnit2.origin, resTeam.data.playerUnit2.unitCode, resTeam.data.playerUnit2.imageTypeNumber);
+        resTeam.data.playerUnit3.imgURL = await getUnitCardImagePath(resTeam.data.playerUnit3.origin, resTeam.data.playerUnit3.unitCode, resTeam.data.playerUnit3.imageTypeNumber);
 
         setTeam(resTeam.data);
     }, []);
 
     const init = useCallback(async () => {
-        await Promise.all([
-            getAccountDetail(),
-            getActivePlayerTeam()
-
-        ]);
+        try {
+            let rs = await getAccountDetail();
+            if (rs) {
+                await getActivePlayerTeam();
+            }
+        }
+        finally {
+            setIsLoading(false);
+        }
     }, [getAccountDetail, getActivePlayerTeam]);
 
     const onShowSettingModal = async () => {
@@ -129,9 +131,10 @@ const Index = memo(() => {
             <View style={[gs.full_size, gs.f6, gs.all_center]}>
                 <MyText>NO EVENT YET</MyText>
             </View>
-            {showSettins &&
+            {showSettings &&
                 <SettingModalComponent onClose={onCloseSettingModal} />
             }
+            <LoadingModalComponent visible={isLoading}></LoadingModalComponent>
         </View>
     );
 });

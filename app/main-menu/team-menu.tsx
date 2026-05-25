@@ -101,7 +101,7 @@ const TeamMenu = memo(() => {
     const [isLoading, setIsLoading] = useState(true);
     const [refreshKey, setRefreshKey] = useState(0);
     const [currPage, setCurrPage] = useState(1);
-    const [totalPage, setTotalPage] = useState(0);
+    const [totalPage, setTotalPage] = useState(1);
     const [listHeight, setListHeight] = useState(0);
     const [playerTeams, setPlayerTeams] = useState<PlayerTeam[]>([]);
     const [selectedTeamID, setSelectedTeamID] = useState('');
@@ -113,8 +113,6 @@ const TeamMenu = memo(() => {
     const router = useRouter();
 
     const fetch = useCallback(async (page: number) => {
-        setIsLoading(true);
-
         try {
             const res = await GetPlayerTeamList(5, page);
             if (!res.success) return;
@@ -132,15 +130,15 @@ const TeamMenu = memo(() => {
             setTotalPage(Math.max(res.data.totalPage, 1));
         }
         finally {
-            setTimeout(() => {
-                setIsLoading(false);
-            }, 500);
+            setIsLoading(false);
         }
     }, []);
 
     useFocusEffect(
         useCallback(() => {
-            fetch(currPage);
+            setIsLoading(true);
+            setPlayerTeams([]);
+            fetch(Math.max(currPage, 1));
         }, [currPage, refreshKey, fetch])
     );
 
@@ -167,7 +165,6 @@ const TeamMenu = memo(() => {
         }
         finally {
             setSelectedTeamID('');
-            setIsLoading(false);
         }
     }, [selectedTeamID]);
 
@@ -258,13 +255,13 @@ const TeamMenu = memo(() => {
                     onNextPress={onNextPress}
                     onPrevPress={onPrevPress} />
             </View>
-            {isLoading && <LoadingModalComponent />}
-            {selectedTeamID !== '' &&
-                <ConfirmationModalComponent data={confirmationData.current}
-                    onClose={onNoDeletePress}
-                    onConfirm={onYesDeletePress}>
-                </ConfirmationModalComponent>
-            }
+            <LoadingModalComponent visible={isLoading} />
+            <ConfirmationModalComponent
+                visible={selectedTeamID !== ''}
+                data={confirmationData.current}
+                onClose={onNoDeletePress}
+                onConfirm={onYesDeletePress}>
+            </ConfirmationModalComponent>
         </View>
     );
 });

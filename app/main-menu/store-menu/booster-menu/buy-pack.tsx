@@ -1,5 +1,6 @@
 import { storePostBuyBoosterPack } from "@/src/api/store/service";
 import { BoosterCard } from "@/src/api/store/type";
+import { getBackCardImage } from "@/src/assets/backCardImages";
 import CardSlotComponent from "@/src/components/general/CardSlotComponent";
 import MessageModalComponent from "@/src/components/general/MessageModalComponent";
 import OpenPackResultMModalComopnent from "@/src/components/mainMenu/inventoryMenu/storeMenu/boosterMenu/OpenPackResultModalComponent";
@@ -7,11 +8,10 @@ import { getUnitCardImagePath } from "@/src/services/generalService";
 import { gs } from "@/src/styles/globalStyles";
 import { router, useLocalSearchParams } from "expo-router";
 import { memo, useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Dimensions, FlatList, ListRenderItem, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, ListRenderItem, Pressable, Text, View } from "react-native";
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from "react-native-reanimated";
 
 const StoreMenuBuyPack = memo(() => {
-    const { height } = Dimensions.get('window');
     const [isLoading, setIsLoading] = useState(true);
     const { boosterCode, boosterName, qty } = useLocalSearchParams();
     const [packs, setPacks] = useState<BoosterCard[][]>([]);
@@ -28,6 +28,16 @@ const StoreMenuBuyPack = memo(() => {
             return;
         }
 
+        for (let i = 0; i < res.data.cards.length; i++) {
+            for (let j = 0; j < res.data.cards[i].length; j++) {
+                res.data.cards[i][j].imgURL = await getUnitCardImagePath(
+                    res.data.cards[i][j].origin,
+                    res.data.cards[i][j].cardCode,
+                    res.data.cards[i][j].imageTypeNumber
+                );
+                res.data.cards[i][j].index = j
+            }
+        }
         const resolvedPacks = await Promise.all(
             res.data.cards.map(async (pack: BoosterCard[]) => {
                 const resolvedCards = await Promise.all(
@@ -82,6 +92,7 @@ const StoreMenuBuyPack = memo(() => {
                 exiting={SlideOutDown}
                 style={[{ height: ITEM_HEIGHT, width: '50%' }, gs.all_center, gs.p5]}>
                 <CardSlotComponent
+                    backURL={getBackCardImage(item.origin)}
                     onPress={onPressCard}
                     index={index}
                     imgURL={item.imgURL}

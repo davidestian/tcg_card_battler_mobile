@@ -9,13 +9,14 @@ interface props {
     index: number;
     imgURL?: string;
     backURL?: string;
-    footerText: string;
+    backText?: string;
+    footerText?: string;
     isShow: boolean;
     isOneTime?: boolean
     onPress?: (index: number) => void;
 }
 
-const CardSlotComponent = memo(({ index, imgURL = '', footerText, isShow, isOneTime = false, backURL = '', onPress }: props) => {
+const CardSlotComponent = memo(({ index, imgURL = '', footerText = '', isShow, isOneTime = false, backURL = '', backText = '', onPress }: props) => {
     const spin = useSharedValue(0);
     const hasFlipped = useSharedValue(false);
 
@@ -62,7 +63,7 @@ const CardSlotComponent = memo(({ index, imgURL = '', footerText, isShow, isOneT
         <Pressable style={[gs.full_size]} accessibilityLabel="button"
             onPress={onPressClick}>
             {/* Front Side */}
-            <Animated.View style={[styles.card, gs.border_card, frontAnimatedStyle]}>
+            <Animated.View style={[styles.card, frontAnimatedStyle]}>
                 {backURL === '' ?
                     <CircleQuestionMarkIcon /> :
                     <Image
@@ -70,6 +71,13 @@ const CardSlotComponent = memo(({ index, imgURL = '', footerText, isShow, isOneT
                         contentFit="fill"
                         style={[gs.full_size, gs.border_card]}
                     />
+                }
+                {backText !== '' &&
+                    <View style={styles.bottomBanner}>
+                        <Text style={[styles.textOnlyBackground, gs.fontS]}>
+                            {backText}
+                        </Text>
+                    </View>
                 }
             </Animated.View>
 
@@ -85,7 +93,7 @@ const CardSlotComponent = memo(({ index, imgURL = '', footerText, isShow, isOneT
                 }
                 {footerText !== '' &&
                     <View style={styles.bottomBanner}>
-                        <Text style={styles.textOnlyBackground}>
+                        <Text style={[styles.textOnlyBackground, gs.fontS]}>
                             {footerText}
                         </Text>
                     </View>

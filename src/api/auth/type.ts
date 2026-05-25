@@ -10,3 +10,14 @@ export interface LoginRS {
 export interface RefreshRQ {
     refreshToken: string
 }
+
+export interface CreateUserRQ {
+    email: string;
+    username: string;
+    password: string;
+}
+
+export interface ForgotPasswordRQ {
+    email: string;
+    password: string;
+}

@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 
 function LayoutContent() {
   const insets = useSafeAreaInsets();
@@ -10,21 +10,17 @@ function LayoutContent() {
         headerShown: false,
         // Applies padding to the container of every screen
         contentStyle: {
-          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
           flex: 1,
         },
       }}
     >
-      <Stack.Screen name="index" />
-      <Stack.Screen name="register" />
-      <Stack.Screen name="forgot-password" />
-      <Stack.Screen name="main-menu" />
+      <Stack.Screen name="unit-change-image-screen" />
+      <Stack.Screen name="unit-upgrade-screen" />
     </Stack>
   );
 }
-
-export default function RootLayout() {
-  // Note: You must be inside a SafeAreaProvider to use hooks
+export default function UnitDetailScreen2() {
   return (
     <SafeAreaProvider>
       <LayoutContent />

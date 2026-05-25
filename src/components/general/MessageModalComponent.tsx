@@ -17,13 +17,13 @@ const MessageModalComponent = memo(({ message, onClose }: props) => {
             <View style={[gs.overlay, gs.full_size]}>
                 <View style={[styles.modal_view, gs.all_center]}>
                     <View style={[gs.f8, gs.all_center]}>
-                        <Text style={[gs.text_center]}>
+                        <Text style={[gs.text_center, gs.fontM]}>
                             {message}
                         </Text>
                     </View>
                     <Pressable style={[gs.f2, gs.full_size, gs.all_center]}
                         onPress={onClose}>
-                        <Text style={[gs.text_center]}>
+                        <Text style={[gs.text_center, gs.fontM]}>
                             OK
                         </Text>
                     </Pressable>

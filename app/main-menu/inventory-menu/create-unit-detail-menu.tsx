@@ -2,15 +2,21 @@ import { invGetPlayerUnitCardByUnitCode, invPostCreatePlayerUnit } from "@/src/a
 import { CostCardItemRQ, InvGetPlayerCardByUnitCodeRS, InvPostCreatePlayerUnitRQ } from "@/src/api/inventory/type";
 import { GetUnitByCode } from "@/src/api/unit/service";
 import { Unit } from "@/src/api/unit/type";
+import { getBackCardImage } from "@/src/assets/backCardImages";
+import BattleEvolveModalComponent from "@/src/components/battle/BattleEvolveModalComponent";
 import CardSlotComponent from "@/src/components/general/CardSlotComponent";
+import { GBox } from "@/src/components/general/GBoxComponent";
+import GeneralHeaderBarComponent from "@/src/components/general/GeneralHeaderBarComponent";
 import LoadingModalComponent from "@/src/components/general/LoadingModalComponent";
 import MessageModalComponent from "@/src/components/general/MessageModalComponent";
+import { StatColor } from "@/src/enums/colorEnum";
 import { getUnitCardImagePath } from "@/src/services/generalService";
+import { scaleMin } from "@/src/services/scalingSizeService";
 import { gs } from "@/src/styles/globalStyles";
 import { LoadingModalType } from "@/src/types/general/loadingType";
 import { MessageModalDataType } from "@/src/types/general/MessageModalDataType";
 import { router, useLocalSearchParams } from "expo-router";
-import { ArrowLeftIcon, ListRestart, Upload } from "lucide-react-native";
+import { CpuIcon, FlameIcon, GaugeIcon, HandFistIcon, ListRestart, ShieldIcon, Upload } from "lucide-react-native";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { FlatList, ListRenderItem, Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -35,6 +41,9 @@ const CreateUnitDetailMenu = memo(() => {
     useEffect(() => {
         currSelectedQTYRef.current = currSelectedQTY;
     }, [currSelectedQTY]);
+
+    const [playEvolveAnimation, setPlayEvolveAnimation] = useState(false);
+
     const init = useCallback(async () => {
         if (!unitCode) return;
         setLoadingData({
@@ -181,20 +190,7 @@ const CreateUnitDetailMenu = memo(() => {
                 return;
             }
 
-            setTimeout(() => {
-                setMessageModalData({
-                    message: 'Create Unit Success',
-                    onClose: () => {
-                        setMessageModalData((prev) => {
-                            return {
-                                ...prev,
-                                message: ''
-                            }
-                        });
-                        router.back();
-                    }
-                });
-            }, 800);
+            setPlayEvolveAnimation(true);
         }
         finally {
             setTimeout(() => {
@@ -206,28 +202,21 @@ const CreateUnitDetailMenu = memo(() => {
         }
     }, [prepareRequestLevelUp]);
 
-    const onBackPress = useCallback(() => {
+    const onCloseAnimation = useCallback(() => {
+        setPlayEvolveAnimation(false);
         router.back();
     }, []);
 
     return (
         <View style={[gs.full_size]}>
-            <View style={[gs.f1, gs.header, gs.all_center, gs.column]}>
-                <Pressable style={[gs.f1, gs.full_size, gs.all_center]}
-                    onPress={onBackPress}
-                    accessibilityLabel="button">
-                    <ArrowLeftIcon></ArrowLeftIcon>
-                </Pressable>
-                <View style={[gs.f2, gs.all_center]}>
-                    <Text>CREATE UNIT DETAIL</Text>
-                </View>
-                <View style={[gs.f1, gs.all_center]}></View>
+            <View style={[gs.f1]}>
+                <GeneralHeaderBarComponent title="CREATE UNIT DETAIL" />
             </View>
-            <View style={[gs.f3, gs.row, gs.p5]}>
+            <View style={[gs.f3]}>
                 {unit !== undefined &&
-                    <>
+                    <GBox style={[gs.full_size, gs.p5]} elements={[unit.elementID1, unit.elementID2]}>
                         <View style={[gs.f8, gs.full_size, gs.column]}>
-                            <View style={[gs.f3, gs.all_center, gs.full_size]}>
+                            <View style={[gs.f3, gs.all_center, gs.full_size, gs.px5]}>
                                 <CardSlotComponent
                                     imgURL={unit.imgURL}
                                     footerText={''}
@@ -235,51 +224,74 @@ const CreateUnitDetailMenu = memo(() => {
                                     isShow={true}
                                 />
                             </View>
-                            <View style={[gs.f6, gs.full_size]}>
-                                <View style={[gs.f1, gs.all_center]}>
-                                    <Text>{unit.unitName}</Text>
-                                </View>
-                                <View style={[gs.f1, gs.column]}>
+                            <View style={[gs.f6]}>
+                                <View style={[gs.border_card, gs.full_size, { backgroundColor: 'rgba(255,255,255,0.8)' }]}>
                                     <View style={[gs.f1, gs.all_center]}>
-                                        <Text>lvl. {unit.unitLevel}</Text>
+                                        <Text style={[gs.fontM]}>{unit.unitName}</Text>
                                     </View>
-                                    <View style={[gs.f2, gs.all_center]}>
-                                        <Text>{unit.unitCode}</Text>
+                                    <View style={[gs.f1, gs.column]}>
+                                        <View style={[gs.f1, gs.all_center]}>
+                                            <Text style={[gs.fontM]}>lvl. {unit.unitLevel}</Text>
+                                        </View>
+                                        <View style={[gs.f2, gs.all_center]}>
+                                            <Text style={[gs.fontM]}>{unit.unitCode}</Text>
+                                        </View>
                                     </View>
-                                </View>
-                                <View style={[gs.f3, gs.all_center, gs.p5]}>
-                                    <View style={[gs.full_size, gs.border_card, gs.all_center]}>
-                                        <Text>{unit.tags}</Text>
+                                    <View style={[gs.f3]}>
+                                        <View style={[gs.f1, gs.full_size, gs.column]}>
+                                            <View style={[gs.f1]}>
+                                                <View style={[gs.f1, gs.all_center]}>
+                                                    <HandFistIcon color={StatColor.offense} size={scaleMin(18)} />
+                                                </View>
+                                                <View style={[gs.f1, gs.all_center]}>
+                                                    <Text style={[gs.fontM, { color: StatColor.offense }]}>{unit.offense}</Text>
+                                                </View>
+                                            </View>
+                                            <View style={[gs.f1]}>
+                                                <View style={[gs.f1, gs.all_center]}>
+                                                    <ShieldIcon color={StatColor.defense} size={scaleMin(18)} />
+                                                </View>
+                                                <View style={[gs.f1, gs.all_center]}>
+                                                    <Text style={[gs.fontM, { color: StatColor.defense }]}>{unit.defense}</Text>
+                                                </View>
+                                            </View>
+                                            <View style={[gs.f1]}>
+                                                <View style={[gs.f1, gs.all_center]}>
+                                                    <CpuIcon color={StatColor.technique} size={scaleMin(18)} />
+                                                </View>
+                                                <View style={[gs.f1, gs.all_center]}>
+                                                    <Text style={[gs.fontM, { color: StatColor.technique }]}>{unit.technique}</Text>
+                                                </View>
+                                            </View>
+                                        </View>
+                                        <View style={[gs.f1, gs.full_size, gs.column]}>
+                                            <View style={[gs.f1]}>
+                                                <View style={[gs.f1, gs.all_center]}>
+                                                    <GaugeIcon color={StatColor.speed} size={scaleMin(18)} />
+                                                </View>
+                                                <View style={[gs.f1, gs.all_center]}>
+                                                    <Text style={[gs.fontM, { color: StatColor.speed }]}>{unit.speed}</Text>
+                                                </View>
+                                            </View>
+                                            <View style={[gs.f1]}>
+                                                <View style={[gs.f1, gs.all_center]}>
+                                                    <FlameIcon color={StatColor.spirit} size={scaleMin(18)} />
+                                                </View>
+                                                <View style={[gs.f1, gs.all_center]}>
+                                                    <Text style={[gs.fontM, { color: StatColor.spirit }]}>{unit.spirit}</Text>
+                                                </View>
+                                            </View>
+                                            <View style={[gs.f1]}>
+                                            </View>
+                                        </View>
                                     </View>
                                 </View>
                             </View>
                         </View>
-                        <View style={[gs.f2, gs.full_size, gs.column]}>
-                            <View style={[gs.f1, gs.all_center]}>
-                                <Text>OFF</Text>
-                                <Text>{unit.offense}</Text>
-                            </View>
-                            <View style={[gs.f1, gs.all_center]}>
-                                <Text>DEF</Text>
-                                <Text>{unit.defense}</Text>
-                            </View>
-                            <View style={[gs.f1, gs.all_center]}>
-                                <Text>TEC</Text>
-                                <Text>{unit.technique}</Text>
-                            </View>
-                            <View style={[gs.f1, gs.all_center]}>
-                                <Text>SPD</Text>
-                                <Text>{unit.speed}</Text>
-                            </View>
-                            <View style={[gs.f1, gs.all_center]}>
-                                <Text>SPT</Text>
-                                <Text>{unit.spirit}</Text>
-                            </View>
-                        </View>
-                    </>
+                    </GBox>
                 }
             </View>
-            <View style={[gs.f5, gs.border_top, gs.border_bottom, gs.p5]}>
+            <View style={[gs.f6, gs.border_top, gs.border_bottom, gs.p5]}>
                 <View style={[gs.full_size]}
                     onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}>
                     {(!loadingData.isLoading || cards.length > 0) && listHeight > 0 &&
@@ -308,9 +320,11 @@ const CreateUnitDetailMenu = memo(() => {
                     <Upload />
                 </Pressable>
             </View>
-            {loadingData.isLoading &&
-                <LoadingModalComponent />
+            <LoadingModalComponent visible={loadingData.isLoading} />
+            {unit &&
+                <BattleEvolveModalComponent visible={(playEvolveAnimation)} prevURI={getBackCardImage(unit.origin)} nextURI={unit.imgURL} onClose={onCloseAnimation}></BattleEvolveModalComponent>
             }
+
             <MessageModalComponent
                 message={messageModalData.message}
                 onClose={messageModalData.onClose}

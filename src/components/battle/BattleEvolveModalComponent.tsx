@@ -5,7 +5,8 @@ import { Modal, StyleSheet, View } from "react-native";
 import Animated, { Easing, interpolate, SlideInDown, SlideOutDown, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from "react-native-worklets";
 
-const BattleEvolveModalComponent = memo(({ prevURI, nextURI, onClose }: {
+const BattleEvolveModalComponent = memo(({ visible, prevURI, nextURI, onClose }: {
+    visible: boolean;
     prevURI: string;
     nextURI: string;
     onClose: () => void;
@@ -13,20 +14,23 @@ const BattleEvolveModalComponent = memo(({ prevURI, nextURI, onClose }: {
     const spin = useSharedValue(0);
 
     useEffect(() => {
+        if (!visible) return;
         setTimeout(() => {
             spin.value = withTiming(7.5, {
                 duration: 3000,
                 easing: Easing.bezier(0.4, 0, 0.2, 1), // Smooth start/stop,
-
             }, (finished) => {
                 if (finished) {
                     setTimeout(() => {
                         scheduleOnRN(onClose);
+                        setTimeout(() => {
+                            spin.value = 0;
+                        }, 500);
                     }, 500);
                 }
             });
         }, 500);
-    }, []);
+    }, [visible]);
 
     const frontAnimatedStyle = useAnimatedStyle(() => {
         // Map 0-1 to a full 0-360 degree circle
@@ -48,22 +52,22 @@ const BattleEvolveModalComponent = memo(({ prevURI, nextURI, onClose }: {
     });
 
     return (
-        <Modal transparent>
+        <Modal
+            visible={visible}
+            transparent>
             <View style={[gs.full_size]}>
                 <Animated.View entering={SlideInDown} exiting={SlideOutDown.delay(500)} style={[gs.full_size, { backgroundColor: 'rgba(0,0,0,0.5)' }, gs.all_center]}>
                     <View style={[styles.body]}>
                         <View style={[gs.f9, gs.full_size, gs.p10, gs.all_center]}>
                             {/* Front Side */}
                             <Animated.View style={[gs.full_size, frontAnimatedStyle]}>
-                                <Image source={prevURI} style={[gs.border_card, gs.full_size]}>
-
+                                <Image source={prevURI} style={[gs.border_card, gs.full_size]} contentFit="fill">
                                 </Image>
                             </Animated.View>
 
                             {/* Back Side */}
                             <Animated.View style={[gs.full_size, backAnimatedStyle, gs.all_center]}>
-                                <Image source={nextURI} style={[gs.border_card, gs.full_size]}>
-
+                                <Image source={nextURI} style={[gs.border_card, gs.full_size]} contentFit="fill">
                                 </Image>
                             </Animated.View>
                         </View>

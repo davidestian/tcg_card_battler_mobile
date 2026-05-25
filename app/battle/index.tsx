@@ -12,7 +12,7 @@ import { getRandomInt, getUnitCardImagePath } from "@/src/services/generalServic
 import { scaleMin } from "@/src/services/scalingSizeService";
 import { gs } from "@/src/styles/globalStyles";
 import { BattleCardSlotType } from "@/src/types/battleTypes";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { CircleQuestionMarkIcon, Columns2Icon, Columns3Icon, CpuIcon, Dice6Icon, DicesIcon, FlameIcon, GaugeIcon, HandFistIcon, LogOutIcon, LucideIcon, PowerIcon, RectangleVerticalIcon, ShieldIcon } from "lucide-react-native";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { FlatList, ListRenderItem, Pressable, StyleSheet, Text, View } from "react-native";
@@ -140,13 +140,14 @@ const BattleIndex = memo(() => {
 
     const prevSlotIndex = useRef(-1);
 
-    const [targetScore, setTargetScore] = useState(999);
+    const [totalAsset, setTotalAsset] = useState(60);
+    const [currAsset, setCurrAsset] = useState(0);
 
-    const [playerScore, setPlayerScore] = useState(0);
+    const [playerScore, setPlayerScore] = useState(60);
     const [playerStats, setPlayerStat] = useState<number[]>([0, 0, 0, 0, 0]);
     const [playerUnits, setPlayerUnits] = useState<BattleUnit[]>([]);
 
-    const [enemyScore, setEnemyScore] = useState(0);
+    const [enemyScore, setEnemyScore] = useState(60);
     const [enemyStats, setEnemyStats] = useState<number[]>([0, 0, 0, 0, 0]);
     const [enemyUnits, setEnemyUnits] = useState<BattleUnit[]>([]);
 
@@ -237,9 +238,12 @@ const BattleIndex = memo(() => {
                 chance = 25;
                 break;
             case 'hard':
-                chance = 75;
+                chance = 50;
                 break;
             case 'very hard':
+                chance = 75;
+                break;
+            case 'insane':
                 chance = 100;
                 break;
         }
@@ -329,34 +333,28 @@ const BattleIndex = memo(() => {
     }, [NextRound]);
 
     const initUnits = useCallback(async (units: BattleUnit[]): Promise<BattleUnit[]> => {
-        return Promise.all(
-            units.map(async (unit) => {
-                const resolvedPaths = await Promise.all(
-                    unit.paths.map(async (path) => ({
-                        ...path,
-                        imgURL: await getUnitCardImagePath(
-                            path.origin,
-                            path.unitCode,
-                            path.imageTypeNumber
-                        ),
-                    }))
+        for (let i = 0; i < units.length; i++) {
+            for (let j = 0; j < units[i].paths.length; j++) {
+                units[i].paths[j].imgURL = await getUnitCardImagePath(
+                    units[i].paths[j].origin,
+                    units[i].paths[j].unitCode,
+                    units[i].paths[j].imageTypeNumber
                 );
-                return {
-                    ...unit,
-                    currLevel: 1,
-                    unitCode: resolvedPaths[0].unitCode,
-                    imgURL: resolvedPaths[0].imgURL,
-                    paths: resolvedPaths,
-                    offense: 1 + resolvedPaths[0].offense,
-                    defense: 1 + resolvedPaths[0].defense,
-                    technique: 1 + resolvedPaths[0].technique,
-                    speed: 1 + resolvedPaths[0].speed,
-                    spirit: 1 + resolvedPaths[0].spirit,
-                    elementID1: resolvedPaths[0].elementID1,
-                    elementID2: resolvedPaths[0].elementID2,
-                };
-            })
-        );
+                setCurrAsset((prev) => prev + 1);
+            }
+            units[i].imgURL = units[i].paths[0].imgURL;
+            units[i].currLevel = 1;
+            units[i].unitCode = units[i].paths[0].unitCode;
+            units[i].imgURL = units[i].paths[0].imgURL;
+            units[i].offense = 1 + units[i].paths[0].offense;
+            units[i].defense = 1 + units[i].paths[0].defense;
+            units[i].technique = 1 + units[i].paths[0].technique;
+            units[i].speed = 1 + units[i].paths[0].speed;
+            units[i].spirit = 1 + units[i].paths[0].spirit;
+            units[i].elementID1 = units[i].paths[0].elementID1;
+            units[i].elementID2 = units[i].paths[0].elementID2;
+        }
+        return units;
     }, []);
 
     const init = useCallback(async () => {
@@ -364,7 +362,9 @@ const BattleIndex = memo(() => {
         setIsReady(false);
         setIsLoading(true);
         setRoundCount(0);
-        levelRCountRef.current = 1;
+        setCurrAsset(0);
+        setTotalAsset(60);
+        levelRCountRef.current = 0;
 
         try {
             const id = Array.isArray(teamID) ? teamID[0] : teamID;
@@ -380,12 +380,12 @@ const BattleIndex = memo(() => {
                 return;
             }
 
-            const [updatedPlayerUnits, updatedEnemyUnits] = await Promise.all([
-                initUnits(resPlayerUnits.data),
-                initUnits(resEnemyUnits.data)
-            ]);
+            let totalPaths = resPlayerUnits.data.reduce((acc, unit) => acc + unit.paths.length, 0);
+            setTotalAsset(totalPaths * 2);
 
-            const totalLevel = resPlayerUnits.data.reduce((acc, unit) => acc + unit.level, 0);
+            const updatedPlayerUnits = await initUnits(resPlayerUnits.data);
+            const updatedEnemyUnits = await initUnits(resEnemyUnits.data);
+
 
             const tempPSummaryTeam: SummaryTeamType = {
                 stats: [0, 0, 0, 0, 0],
@@ -501,10 +501,13 @@ const BattleIndex = memo(() => {
                 });
             }
 
-            levelRCountRef.current = Math.max(totalLevel / 5, 1);
-            setTargetScore(totalLevel * 10);
-            setPlayerScore(0);
-            setEnemyScore(0);
+            totalPaths -= 3;
+            if (totalPaths > 0) {
+                levelRCountRef.current = Math.max(Math.floor((totalPaths + 4) / 5), 1);
+            }
+
+            setPlayerScore(60);
+            setEnemyScore(60);
             setPlayerStat(tempCurrPStats);
             setEnemyStats(tempCurrEStats);
             setPlayerUnits(updatedPlayerUnits);
@@ -524,9 +527,11 @@ const BattleIndex = memo(() => {
         }
     }, []);
 
-    useEffect(() => {
-        init();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            init();
+        }, [])
+    );
 
     const clearBoard = useCallback(() => {
         setCardSlots((prev) => prev.map(slot => {
@@ -613,18 +618,17 @@ const BattleIndex = memo(() => {
 
     const unitCardMatch = useCallback((index: number) => {
         const targetUnit = currPlayerRef.current === 1 ? playerUnits[index] : enemyUnits[index];
-        let offense = 1;
-        let defense = 1;
-        let technique = 1;
-        let speed = 1;
-        let spirit = 1;
+        let offense = 0;
+        let defense = 0;
+        let technique = 0;
+        let speed = 0;
+        let spirit = 0;
 
         const currLevel = targetUnit.currLevel;
-        const nextLevel = Math.min(targetUnit.level, currLevel + 1);
+        const nextLevel = Math.min(targetUnit.paths.length, currLevel + 1);
         let isEndTurn = true;
         if (currLevel !== nextLevel) {
-            if (currPlayerRef.current === 1) resultValues.current[1]++;
-            const nextUnit = targetUnit.paths.find(q => q.unitLevel === targetUnit.currLevel + 1);
+            const nextUnit = targetUnit.paths[targetUnit.currLevel];
             if (nextUnit) {
                 setPrevUnitURI(targetUnit.imgURL);
                 setNextUnitURI(nextUnit.imgURL);
@@ -639,6 +643,12 @@ const BattleIndex = memo(() => {
                 technique += nextUnit.technique;
                 speed += nextUnit.speed;
                 spirit += nextUnit.spirit;
+            }
+            if (currPlayerRef.current === 1) {
+                resultValues.current[1]++;
+                setPlayerScore((prev) => prev + 20);
+            } else {
+                setEnemyScore((prev) => prev + 20);
             }
         } else {
             endTurn(false);
@@ -689,16 +699,12 @@ const BattleIndex = memo(() => {
     }, [playerUnits, enemyUnits, playerStats, enemyStats]);
 
     const scoreMatch = useCallback((index: number) => {
-        let val = 0;
-        if (index === 5)
-            val = currPlayerRef.current === 1 ? Math.max(...playerStats) : Math.max(...enemyStats);
-        else
-            val = currPlayerRef.current === 1 ? playerStats[index] : enemyStats[index];
+        const val = currPlayerRef.current === 1 ? playerStats[index] : enemyStats[index];
 
         if (currPlayerRef.current === 1) {
-            setPlayerScore((prev) => prev + val);
+            setEnemyScore((prev) => prev - val);
         } else {
-            setEnemyScore((prev) => prev + val);
+            setPlayerScore((prev) => prev - val);
         }
     }, [playerStats, enemyStats]);
 
@@ -732,8 +738,8 @@ const BattleIndex = memo(() => {
             case "SPT":
                 scoreMatch(4);
                 break;
-            case "DC1":
-            case "DC2":
+            case "RND1":
+            case "RND2":
                 unitCardMatch(getRandomInt(0, 2));
                 return;
         }
@@ -837,12 +843,12 @@ const BattleIndex = memo(() => {
     }, [slot_height, onCardSlotPress]);
 
     useEffect(() => {
-        if (playerScore >= targetScore || enemyScore >= targetScore) {
+        if (playerScore <= 0 || enemyScore <= 0) {
             if (playerScore > enemyScore) resultValues.current[2] = playerScore - enemyScore;
             setShowResult(true);
             isEndRef.current = true;
         }
-    }, [playerScore, targetScore, enemyScore]);
+    }, [playerScore, enemyScore]);
 
     const [showSurrenderDialog, setShowSurrenderDialog] = useState<boolean>(false);
     const onSurrenderClick = useCallback(() => {
@@ -862,20 +868,28 @@ const BattleIndex = memo(() => {
                 <Animated.View entering={FadeIn} style={[gs.full_size]}>
                     <Animated.View entering={SlideInUp} exiting={SlideOutUp} style={[gs.f4, gs.full_size, gs.p5, { backgroundColor: PlayerColor.Player }]}>
                         <View style={[gs.f1, gs.full_size, gs.all_center]}>
-                            <Text style={{ color: 'white' }}>PLAYER</Text>
+                            <Text style={[{ color: 'white' }, gs.fontM]}>PLAYER</Text>
                         </View>
                         <View style={[gs.f4, gs.full_size, gs.p5, gs.border_card, { backgroundColor: 'white' }]}>
                             <View style={[gs.f2, gs.full_size, gs.column]}>
-                                {pSummaryTeam.units.map((item, index) => {
-                                    return (
-                                        <View key={`eu-${index}`} style={[gs.f1, gs.p5]}>
-                                            <CardComponent
-                                                imgURL={item.imgURI}
-                                                footerText={`${item.level}`}
-                                                elements={[item.element1, item.element2]} />
-                                        </View>
-                                    )
-                                })}
+                                <View key={`pu-${0}`} style={[gs.f1, gs.px5]}>
+                                    <CardComponent
+                                        imgURL={pSummaryTeam.units[0].imgURI}
+                                        footerText=''
+                                        elements={[pSummaryTeam.units[0].element1, pSummaryTeam.units[0].element2]} />
+                                </View>
+                                <View key={`pu-${1}`} style={[gs.f1, gs.px5]}>
+                                    <CardComponent
+                                        imgURL={pSummaryTeam.units[1].imgURI}
+                                        footerText=''
+                                        elements={[pSummaryTeam.units[1].element1, pSummaryTeam.units[1].element2]} />
+                                </View>
+                                <View key={`pu-${2}`} style={[gs.f1]}>
+                                    <CardComponent
+                                        imgURL={pSummaryTeam.units[2].imgURI}
+                                        footerText=''
+                                        elements={[pSummaryTeam.units[2].element1, pSummaryTeam.units[2].element2]} />
+                                </View>
                             </View>
                             <View style={[gs.f1, gs.full_size, gs.column]}>
                                 {pSummaryTeam.stats.map((item, index) => {
@@ -890,7 +904,7 @@ const BattleIndex = memo(() => {
                                                                     StatColor.spirit
                                             }]} >
                                                 <View style={[gs.full_size, gs.all_center, gs.border_card, { backgroundColor: 'white' }]}>
-                                                    <Text>{item}</Text>
+                                                    <Text style={[gs.fontM]}>{item}</Text>
                                                 </View>
                                             </View>
                                         </View>
@@ -901,9 +915,9 @@ const BattleIndex = memo(() => {
                     </Animated.View>
                     <Animated.View entering={FadeIn.delay(1000)} exiting={FadeOut} style={[gs.f1, gs.all_center]}>
                         <Pressable onPress={startGameClick} style={[gs.full_size, gs.all_center, gs.column]}>
-                            <View style={[gs.f2, gs.all_center]}><Text>PRESS TO </Text></View>
-                            <View style={[gs.f1, gs.all_center]}><PowerIcon color={'red'} /></View>
-                            <View style={[gs.f2, gs.all_center]}><Text> START</Text></View>
+                            <View style={[gs.f2, gs.all_center]}><Text style={[gs.fontM]} >PRESS TO </Text></View>
+                            <View style={[gs.f1, gs.all_center]}><PowerIcon color={'red'} size={scaleMin(22)} /></View>
+                            <View style={[gs.f2, gs.all_center]}><Text style={[gs.fontM]}> START</Text></View>
                         </Pressable>
                     </Animated.View>
                     <Animated.View entering={SlideInDown} exiting={SlideOutDown} style={[gs.f4, gs.full_size, gs.p5, { backgroundColor: PlayerColor.Enemy }]}>
@@ -921,7 +935,7 @@ const BattleIndex = memo(() => {
                                                                     StatColor.spirit
                                             }]} >
                                                 <View style={[gs.full_size, gs.all_center, gs.border_card, { backgroundColor: 'white' }]}>
-                                                    <Text>{item}</Text>
+                                                    <Text style={[gs.fontM]}>{item}</Text>
                                                 </View>
                                             </View>
                                         </View>
@@ -929,20 +943,28 @@ const BattleIndex = memo(() => {
                                 })}
                             </View>
                             <View style={[gs.f2, gs.full_size, gs.column]}>
-                                {eSummaryTeam.units.map((item, index) => {
-                                    return (
-                                        <View key={`pu-${index}`} style={[gs.f1, gs.p10]}>
-                                            <CardComponent
-                                                imgURL={item.imgURI}
-                                                footerText={`${item.level}`}
-                                                elements={[item.element1, item.element2]} />
-                                        </View>
-                                    )
-                                })}
+                                <View key={`eu-${0}`} style={[gs.f1, gs.px5]}>
+                                    <CardComponent
+                                        imgURL={eSummaryTeam.units[0].imgURI}
+                                        footerText=''
+                                        elements={[eSummaryTeam.units[0].element1, eSummaryTeam.units[0].element2]} />
+                                </View>
+                                <View key={`eu-${1}`} style={[gs.f1, gs.px5]}>
+                                    <CardComponent
+                                        imgURL={eSummaryTeam.units[1].imgURI}
+                                        footerText=''
+                                        elements={[eSummaryTeam.units[1].element1, eSummaryTeam.units[1].element2]} />
+                                </View>
+                                <View key={`eu-${2}`} style={[gs.f1]}>
+                                    <CardComponent
+                                        imgURL={eSummaryTeam.units[2].imgURI}
+                                        footerText=''
+                                        elements={[eSummaryTeam.units[2].element1, eSummaryTeam.units[2].element2]} />
+                                </View>
                             </View>
                         </View>
                         <View style={[gs.f1, gs.full_size, gs.all_center]}>
-                            <Text style={{ color: 'white' }}>ENEMY</Text>
+                            <Text style={[{ color: 'white' }, gs.fontM]}>ENEMY</Text>
                         </View>
                     </Animated.View>
                 </Animated.View>
@@ -952,7 +974,7 @@ const BattleIndex = memo(() => {
                     <View style={[gs.f1, gs.header, gs.full_size, gs.column, gs.border_bottom]}>
                         <View style={[gs.f1, gs.all_center]}>
                             <Text style={[gs.fontM, gs.text_center]}>ROUND</Text>
-                            <Text>{roundCount}</Text>
+                            <Text style={[gs.fontM]}>{roundCount}/{levelRCountRef.current}</Text>
                         </View>
                         <View style={[gs.f2, gs.all_center, { paddingBottom: scaleMin(5), paddingTop: scaleMin(5) }]}>
                             <View style={[gs.f1, gs.all_center, gs.full_size]}>
@@ -965,7 +987,7 @@ const BattleIndex = memo(() => {
                                     entering={FlipInEasyX.delay(500)}
                                     exiting={FlipOutEasyX}
                                     style={[gs.full_size, gs.f1, gs.all_center, gs.radius, { backgroundColor: PlayerColor.Player }]}>
-                                    <Text style={{ color: 'white' }}>PLAYER TURN</Text>
+                                    <Text style={[{ color: 'white' }, gs.fontM]}>PLAYER TURN</Text>
                                 </Animated.View>
                             }
                             {currPlayer === 2 &&
@@ -973,7 +995,7 @@ const BattleIndex = memo(() => {
                                     entering={FlipInEasyX.delay(500)}
                                     exiting={FlipOutEasyX}
                                     style={[gs.full_size, gs.f1, gs.all_center, gs.radius, { backgroundColor: PlayerColor.Enemy }]}>
-                                    <Text style={{ color: 'white' }}>ENEMY TURN</Text>
+                                    <Text style={[{ color: 'white' }, gs.fontM]}>ENEMY TURN</Text>
                                 </Animated.View>
                             }
                         </View>
@@ -985,61 +1007,71 @@ const BattleIndex = memo(() => {
                     </View>
                     <View style={[gs.f2, gs.full_size]}>
                         <View style={[gs.f2, gs.column, gs.p5]}>
-                            <View style={[gs.f5, gs.px5]}>
+                            <View style={[gs.f4, gs.px5]}>
                                 <View style={[gs.f1, gs.all_center, gs.border_card, { backgroundColor: PlayerColor.Player }]}>
-                                    <Text style={{ color: 'white' }}>PLAYER</Text>
+                                    <Text style={[{ color: 'white' }, gs.fontM]}>PLAYER</Text>
                                 </View>
                                 <View style={[gs.f2, gs.all_center, gs.column]}>
                                     <AnimatedNumbers
+                                        fontStyle={[gs.fontM]}
                                         animationDuration={1000}
                                         animateToNumber={playerScore}
                                     />
-                                    <Text> / {targetScore}</Text>
                                 </View>
                             </View>
-                            <View style={[gs.f2, gs.all_center]}>
+                            <View style={[gs.f2, gs.all_center, gs.px5]}>
                                 <CardComponent
                                     imgURL={playerUnits[0].imgURL}
-                                    footerText={`${playerUnits[0].currLevel}`}
+                                    footerText=''
                                     elements={[playerUnits[0].elementID1, playerUnits[0].elementID2]} />
                             </View>
-                            <View style={[gs.f2, gs.all_center]}>
+                            <View style={[gs.f2, gs.all_center, gs.px5]}>
                                 <CardComponent
                                     imgURL={playerUnits[1].imgURL}
-                                    footerText={`${playerUnits[1].currLevel}`}
+                                    footerText=''
                                     elements={[playerUnits[1].elementID1, playerUnits[1].elementID2]} />
                             </View>
                             <View style={[gs.f2, gs.all_center]}>
                                 <CardComponent
                                     imgURL={playerUnits[2].imgURL}
-                                    footerText={`${playerUnits[2].currLevel}`}
+                                    footerText=''
                                     elements={[playerUnits[2].elementID1, playerUnits[2].elementID2]} />
                             </View>
                         </View>
                         <View style={[gs.f1, gs.column, styles.player_stat_bar]}>
                             <View style={[gs.f1, gs.p5, styles.border_right, { backgroundColor: StatColor.offense }]}>
                                 <View style={[gs.all_center, gs.border_card, gs.full_size, { backgroundColor: 'white' }]}>
-                                    <AnimatedNumbers animationDuration={1000} animateToNumber={playerStats[0]} />
+                                    <AnimatedNumbers
+                                        fontStyle={[gs.fontM]}
+                                        animationDuration={1000} animateToNumber={playerStats[0]} />
                                 </View>
                             </View>
                             <View style={[gs.f1, gs.p5, styles.border_right, { backgroundColor: StatColor.defense }]}>
                                 <View style={[gs.all_center, gs.border_card, gs.full_size, { backgroundColor: 'white' }]}>
-                                    <AnimatedNumbers animationDuration={1000} animateToNumber={playerStats[1]} />
+                                    <AnimatedNumbers
+                                        fontStyle={[gs.fontM]}
+                                        animationDuration={1000} animateToNumber={playerStats[1]} />
                                 </View>
                             </View>
                             <View style={[gs.f1, gs.p5, styles.border_right, { backgroundColor: StatColor.technique }]}>
                                 <View style={[gs.all_center, gs.border_card, gs.full_size, { backgroundColor: 'white' }]}>
-                                    <AnimatedNumbers animationDuration={1000} animateToNumber={playerStats[2]} />
+                                    <AnimatedNumbers
+                                        fontStyle={[gs.fontM]}
+                                        animationDuration={1000} animateToNumber={playerStats[2]} />
                                 </View>
                             </View>
                             <View style={[gs.f1, gs.p5, styles.border_right, { backgroundColor: StatColor.speed }]}>
                                 <View style={[gs.all_center, gs.border_card, gs.full_size, { backgroundColor: 'white' }]}>
-                                    <AnimatedNumbers animationDuration={1000} animateToNumber={playerStats[3]} />
+                                    <AnimatedNumbers
+                                        fontStyle={[gs.fontM]}
+                                        animationDuration={1000} animateToNumber={playerStats[3]} />
                                 </View>
                             </View>
                             <View style={[gs.f1, gs.p5, styles.border_right, { backgroundColor: StatColor.spirit }]}>
                                 <View style={[gs.all_center, gs.border_card, gs.full_size, { backgroundColor: 'white' }]}>
-                                    <AnimatedNumbers animationDuration={1000} animateToNumber={playerStats[4]} />
+                                    <AnimatedNumbers
+                                        fontStyle={[gs.fontM]}
+                                        animationDuration={1000} animateToNumber={playerStats[4]} />
                                 </View>
                             </View>
                         </View>
@@ -1060,93 +1092,103 @@ const BattleIndex = memo(() => {
                         <View style={[gs.f1, gs.column, styles.enemy_stat_bar]}>
                             <View style={[gs.f1, gs.p5, styles.border_right, { backgroundColor: StatColor.offense }]}>
                                 <View style={[gs.all_center, gs.border_card, gs.full_size, { backgroundColor: 'white' }]}>
-                                    <AnimatedNumbers animationDuration={1000} animateToNumber={enemyStats[0]} />
+                                    <AnimatedNumbers
+                                        fontStyle={[gs.fontM]}
+                                        animationDuration={1000} animateToNumber={enemyStats[0]} />
                                 </View>
                             </View>
                             <View style={[gs.f1, gs.p5, styles.border_right, { backgroundColor: StatColor.defense }]}>
                                 <View style={[gs.all_center, gs.border_card, gs.full_size, { backgroundColor: 'white' }]}>
-                                    <AnimatedNumbers animationDuration={1000} animateToNumber={enemyStats[1]} />
+                                    <AnimatedNumbers
+                                        fontStyle={[gs.fontM]}
+                                        animationDuration={1000} animateToNumber={enemyStats[1]} />
                                 </View>
                             </View>
                             <View style={[gs.f1, gs.p5, styles.border_right, { backgroundColor: StatColor.technique }]}>
                                 <View style={[gs.all_center, gs.border_card, gs.full_size, { backgroundColor: 'white' }]}>
-                                    <AnimatedNumbers animationDuration={1000} animateToNumber={enemyStats[2]} />
+                                    <AnimatedNumbers
+                                        fontStyle={[gs.fontM]}
+                                        animationDuration={1000} animateToNumber={enemyStats[2]} />
                                 </View>
                             </View>
                             <View style={[gs.f1, gs.p5, styles.border_right, { backgroundColor: StatColor.speed }]}>
                                 <View style={[gs.all_center, gs.border_card, gs.full_size, { backgroundColor: 'white' }]}>
-                                    <AnimatedNumbers animationDuration={1000} animateToNumber={enemyStats[3]} />
+                                    <AnimatedNumbers
+                                        fontStyle={[gs.fontM]}
+                                        animationDuration={1000} animateToNumber={enemyStats[3]} />
                                 </View>
                             </View>
                             <View style={[gs.f1, gs.p5, styles.border_right, { backgroundColor: StatColor.spirit }]}>
                                 <View style={[gs.all_center, gs.border_card, gs.full_size, { backgroundColor: 'white' }]}>
-                                    <AnimatedNumbers animationDuration={1000} animateToNumber={enemyStats[4]} />
+                                    <AnimatedNumbers
+                                        fontStyle={[gs.fontM]}
+                                        animationDuration={1000} animateToNumber={enemyStats[4]} />
                                 </View>
                             </View>
                         </View>
                         <View style={[gs.f2, gs.column, gs.p5]}>
-                            <View style={[gs.f5, gs.px5]}>
+                            <View style={[gs.f4, gs.px5]}>
                                 <View style={[gs.f1, gs.all_center, gs.border_card, { backgroundColor: PlayerColor.Enemy }]}>
-                                    <Text style={{ color: 'white' }}>ENEMY</Text>
+                                    <Text style={[{ color: 'white' }, gs.fontM]}>ENEMY</Text>
                                 </View>
                                 <View style={[gs.f2, gs.all_center, gs.column]}>
                                     <AnimatedNumbers
+                                        fontStyle={[gs.fontM]}
                                         animationDuration={1000}
                                         animateToNumber={enemyScore}
                                     />
-                                    <Text> / {targetScore}</Text>
                                 </View>
                             </View>
-                            <View style={[gs.f2, gs.all_center]}>
+                            <View style={[gs.f2, gs.all_center, gs.px5]}>
                                 <CardComponent
                                     imgURL={enemyUnits[0].imgURL}
-                                    footerText={`${enemyUnits[0].currLevel}`}
+                                    footerText=''
                                     elements={[enemyUnits[0].elementID1, enemyUnits[0].elementID2]} />
                             </View>
-                            <View style={[gs.f2, gs.all_center]}>
+                            <View style={[gs.f2, gs.all_center, gs.px5]}>
                                 <CardComponent
                                     imgURL={enemyUnits[1].imgURL}
-                                    footerText={`${enemyUnits[1].currLevel}`}
+                                    footerText=''
                                     elements={[enemyUnits[1].elementID1, enemyUnits[1].elementID2]} />
                             </View>
-                            <View style={[gs.f2, gs.all_center]}>
+                            <View style={[gs.f2, gs.all_center, gs.px5]}>
                                 <CardComponent
                                     imgURL={enemyUnits[2].imgURL}
-                                    footerText={`${enemyUnits[2].currLevel}`}
+                                    footerText=''
                                     elements={[enemyUnits[2].elementID1, enemyUnits[2].elementID2]} />
                             </View>
                         </View>
                     </View>
-                    {isLoading && <LoadingModalComponent />}
+                    <LoadingModalComponent visible={isLoading} />
                 </Animated.View>
             }
             {isReady &&
                 <ChangeTurnModalComponent playerNumber={currPlayer} message={messageModal} />
             }
-            {playEvolveAnimation &&
-                <BattleEvolveModalComponent prevURI={prevUnitURI} nextURI={nextUnitURI} onClose={onCloseEvolveModal}></BattleEvolveModalComponent>
-            }
-            {showResult &&
-                (<BattleResultModalComponent
-                    key={new Date().toString()}
-                    isWin={playerScore > enemyScore}
-                    values={resultValues.current}
-                    headers={resultHeaders.current}
-                    dificulty={
+            <BattleEvolveModalComponent
+                visible={playEvolveAnimation}
+                prevURI={prevUnitURI} nextURI={nextUnitURI} onClose={onCloseEvolveModal} />
+            <BattleResultModalComponent
+                visible={showResult}
+                key={new Date().toString()}
+                isWin={playerScore > enemyScore}
+                values={resultValues.current}
+                headers={resultHeaders.current}
+                dificulty={
+                    playerScore >= enemyScore ?
                         dificulty === 'medium' ? 10 :
                             dificulty === 'hard' ? 25 :
                                 dificulty === 'very hard' ? 50 :
                                     dificulty === 'insane' ? 100 : 1
-                    }
-                    onContinue={onContinuePress}>
-                </BattleResultModalComponent>)
-            }
-            {showSurrenderDialog &&
-                <ConfirmationModalComponent
-                    data={{ message: 'Are you sure to surrender ?', noText: 'NO', yesText: 'YES' }}
-                    onClose={onCloseSurrender}
-                    onConfirm={onSurrender} />
-            }
+                        : 1
+                }
+                onContinue={onContinuePress} />
+            <ConfirmationModalComponent
+                visible={showSurrenderDialog}
+                data={{ message: 'Are you sure to surrender ?', noText: 'NO', yesText: 'YES' }}
+                onClose={onCloseSurrender}
+                onConfirm={onSurrender} />
+            <LoadingModalComponent visible={isLoading} message={`LOADING ASSETS ` + currAsset + `/` + totalAsset}></LoadingModalComponent>
         </View>
     );
 });

@@ -4,8 +4,8 @@ import { StoreGetAllBoosterCardRS, StoreGetAllBoosterRS, StoreGetBoosterRarityRa
 
 const PathURL = 'api/v1/store';
 
-export const storeGetAllBooster = async (): Promise<APIResponse<StoreGetAllBoosterRS>> => {
-    const response = await privateAPI.get<APIResponse<StoreGetAllBoosterRS>>(`${PathURL}/booster`);
+export const storeGetAllBooster = async (limit: number): Promise<APIResponse<StoreGetAllBoosterRS>> => {
+    const response = await privateAPI.get<APIResponse<StoreGetAllBoosterRS>>(`${PathURL}/booster?limit=${limit}`);
     return response.data;
 }
 

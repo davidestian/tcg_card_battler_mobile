@@ -41,21 +41,21 @@ export const TeamSummaryComponent = memo(({
                 <View style={[gs.f1, gs.full_size, gs.p5]}>
                     <CardComponent
                         imgURL={imgURL1}
-                        footerText={`lvl. ${level1}`}
+                        footerText={`${level1}`}
                         elements={[element1_1, element1_2]}
                     />
                 </View>
                 <View style={[gs.f1, gs.full_size, gs.p5]}>
                     <CardComponent
                         imgURL={imgURL2}
-                        footerText={`lvl. ${level2}`}
+                        footerText={`${level2}`}
                         elements={[element2_1, element2_2]}
                     />
                 </View>
                 <View style={[gs.f1, gs.full_size, gs.p5]}>
                     <CardComponent
                         imgURL={imgURL3}
-                        footerText={`lvl. ${level3}`}
+                        footerText={`${level3}`}
                         elements={[element3_1, element3_2]}
                     />
                 </View>

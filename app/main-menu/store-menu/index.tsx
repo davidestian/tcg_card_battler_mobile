@@ -24,10 +24,6 @@ const StoreMenuIndex = memo(() => {
         }
     ];
 
-    const handlePressBooster = useCallback(() => {
-        router.push('/main-menu/store-menu/booster-menu');
-    }, [router]);
-
     const ITEM_HEIGHT = listHeight / 5;
     const renderItem: ListRenderItem<menus> = useCallback(({ item }) => {
         return (

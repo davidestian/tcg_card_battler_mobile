@@ -5,6 +5,7 @@ export default function storeMenuLayout() {
         <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="buy-pack" />
+            <Stack.Screen name="booster-detail-screen" />
         </Stack>
     );
 }

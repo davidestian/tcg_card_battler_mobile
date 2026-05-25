@@ -10,14 +10,6 @@ export default function mainMenuLayout() {
                     title: 'HOME',
                     tabBarIcon: () => <Tent></Tent>,
                 }}
-                listeners={({ navigation }) => ({
-                    tabPress: (e) => {
-                        // 2. Now you can use it
-                        if (navigation.isFocused()) {
-                            e.preventDefault();
-                        }
-                    },
-                })}
             />
             <Tabs.Screen
                 name="inventory-menu"
@@ -26,14 +18,6 @@ export default function mainMenuLayout() {
                     popToTopOnBlur: true,
                     tabBarIcon: () => <Archive></Archive>,
                 }}
-                listeners={({ navigation }) => ({
-                    tabPress: (e) => {
-                        // 2. Now you can use it
-                        if (navigation.isFocused()) {
-                            e.preventDefault();
-                        }
-                    },
-                })}
             />
             <Tabs.Screen
                 name="team-menu"
@@ -41,14 +25,6 @@ export default function mainMenuLayout() {
                     title: 'TEAM',
                     tabBarIcon: () => <UsersRoundIcon></UsersRoundIcon>,
                 }}
-                listeners={({ navigation }) => ({
-                    tabPress: (e) => {
-                        // 2. Now you can use it
-                        if (navigation.isFocused()) {
-                            e.preventDefault();
-                        }
-                    },
-                })}
             />
             <Tabs.Screen
                 name="battle-menu"
@@ -56,14 +32,6 @@ export default function mainMenuLayout() {
                     title: 'BATTLE',
                     tabBarIcon: () => <Swords></Swords>,
                 }}
-                listeners={({ navigation }) => ({
-                    tabPress: (e) => {
-                        // 2. Now you can use it
-                        if (navigation.isFocused()) {
-                            e.preventDefault();
-                        }
-                    },
-                })}
             />
             <Tabs.Screen
                 name="store-menu"
@@ -72,14 +40,6 @@ export default function mainMenuLayout() {
                     tabBarIcon: () => <Store></Store>,
                     popToTopOnBlur: true,
                 }}
-                listeners={({ navigation }) => ({
-                    tabPress: (e) => {
-                        // 2. Now you can use it
-                        if (navigation.isFocused()) {
-                            e.preventDefault();
-                        }
-                    },
-                })}
             />
         </Tabs>
     );

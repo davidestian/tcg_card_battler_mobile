@@ -1,12 +1,12 @@
 
 import { Directory, File, Paths } from 'expo-file-system';
-import { BASE_URI } from '../config';
+import { ASSET_BASE_URI } from '../config';
 import { ElementColor } from '../enums/colorEnum';
 import { ElementEnum } from '../enums/generalEnum';
 
 export const getUnitCardImagePath = async (origin: string, code: string, type: number): Promise<string> => {
     const filename = `${String(type).padStart(2, '0')}.webp`;
-    const folderPath = `asset/images/units/${origin}/${code}/`;
+    const folderPath = `units/${origin}/${code}/`;
     const fileUri = `${folderPath}${filename}`;
 
     try {
@@ -27,8 +27,26 @@ export const getUnitCardImagePath = async (origin: string, code: string, type: n
         // 4. Download directly from API to the file object
         // This method handles the network request and writing to disk
         try {
-            const downloadedFile = await File.downloadFileAsync(`${BASE_URI}/${fileUri}`, unitFile);
-            return downloadedFile.uri;
+            let n = 0;
+            while (n < 3) {
+                try {
+
+                    const downloadedFile = await File.downloadFileAsync(`${ASSET_BASE_URI}/${fileUri}`, unitFile);
+                    return downloadedFile.uri;
+                }
+                catch (error: unknown) {
+                    if (error instanceof Error) {
+                        if (error.message.includes("already exists")) {
+                            console.log(error.message)
+                        } else {
+                            console.log(error.message)
+                        }
+                    }
+                    n++
+                }
+            }
+            console.log(`Failed to donwload image ${ASSET_BASE_URI}/${fileUri}`);
+            return '';
         } catch (error: unknown) {
             // 2. Specific Error Catching
             if (error instanceof Error) {
@@ -115,3 +133,9 @@ export const getElementColor = (element: ElementEnum): string => {
 
     return rs;
 }
+
+
+export const validateEmail = (email: string) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+};

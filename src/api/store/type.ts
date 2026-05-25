@@ -6,6 +6,7 @@ export interface Booster {
     boosterCode: string;
     boosterName: string;
     price: number;
+    boosterCards: BoosterCard[];
 }
 
 export interface StoreGetAllBoosterCardRS {
@@ -20,6 +21,8 @@ export interface BoosterCard {
     cardRarityCode: string;
     price: number;
     origin: string;
+    elementID1: number;
+    elementID2: number;
     imgURL: string;
     isShow: boolean;
 }

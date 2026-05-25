@@ -1,8 +1,10 @@
 import { GetActivePlayerTeamID, GetPlayerTeamByTeamID } from "@/src/api/team/service";
 import { PlayerTeam } from "@/src/api/team/type";
+import LoadingModalComponent from "@/src/components/general/LoadingModalComponent";
 import MessageModalComponent from "@/src/components/general/MessageModalComponent";
 import { TeamSummaryComponent } from "@/src/components/general/TeamSummaryComponent";
 import { getUnitCardImagePath } from "@/src/services/generalService";
+import { scaleMin } from "@/src/services/scalingSizeService";
 import { gs } from "@/src/styles/globalStyles";
 import { useFocusEffect, useRouter } from "expo-router";
 import { LucideIcon, SignalHighIcon, SignalIcon, SignalLowIcon, SignalMediumIcon, SwordsIcon } from "lucide-react-native";
@@ -175,7 +177,7 @@ const BattleMenu = memo(() => {
     return (
         <View style={gs.full_size}>
             <View style={[gs.f1, gs.full_size, gs.header, gs.all_center, gs.column]}>
-                <SwordsIcon /><Text> CHOOSE BATTLE </Text><SwordsIcon />
+                <SwordsIcon size={scaleMin(18)} /><Text> BATTLE </Text><SwordsIcon size={scaleMin(18)} />
             </View>
             <View style={[gs.f3, gs.full_size, gs.p10]}>
                 {team !== undefined &&
@@ -207,10 +209,8 @@ const BattleMenu = memo(() => {
                         renderItem={renderItem} />
                 }
             </View>
-            {
-                message !== '' &&
-                <MessageModalComponent message={message} onClose={onCloseMessage}></MessageModalComponent>
-            }
+            <MessageModalComponent message={message} onClose={onCloseMessage}></MessageModalComponent>
+            <LoadingModalComponent visible={!isReady}></LoadingModalComponent>
         </View>
     );
 });

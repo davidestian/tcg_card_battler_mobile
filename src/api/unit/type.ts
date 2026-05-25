@@ -2,9 +2,7 @@ export interface UnitGetNextLevelPathRS {
     unitCode: string;
     unitName: string;
     origin: string;
-    tags: string[];
-    targetLevel: number;
-    cost: number;
+    unitLevel: number;
     offense: number;
     defense: number;
     technique: number;

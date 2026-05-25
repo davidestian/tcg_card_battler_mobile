@@ -31,7 +31,8 @@ const ResultItemComponent = memo(({ header, val }: {
 const PLAYER_COLOR = '#3B82F6';
 const ENEMY_COLOR = '#dc5555';
 
-const BattleResultModalComponent = memo(({ isWin, headers, values, dificulty, onContinue }: {
+const BattleResultModalComponent = memo(({ visible, isWin, headers, values, dificulty, onContinue }: {
+    visible: boolean;
     isWin: boolean;
     headers: string[];
     values: number[];
@@ -59,6 +60,7 @@ const BattleResultModalComponent = memo(({ isWin, headers, values, dificulty, on
     }, []);
 
     useEffect(() => {
+        if (!visible) return;
         setNow(new Date().toString());
         setFinish(false);
         setListHeight(0);
@@ -84,7 +86,7 @@ const BattleResultModalComponent = memo(({ isWin, headers, values, dificulty, on
         saveGold(calculatedTotal * dificulty);
         return () => clearTimeout(timer);
 
-    }, [isWin, headers, values, saveGold]);
+    }, [visible, isWin, headers, values, saveGold]);
 
     const onContinuePress = useCallback(() => {
         setFinalHeaders([]);
@@ -97,7 +99,8 @@ const BattleResultModalComponent = memo(({ isWin, headers, values, dificulty, on
 
 
     return (
-        <Modal transparent animationType="slide">
+        <Modal transparent animationType="slide"
+            visible={visible}>
             <View style={[gs.full_size, { backgroundColor: 'rgba(0,0,0,0.5)' }, gs.all_center]}>
                 <View style={[styles.body, gs.border_card]}>
                     <View style={[gs.f1, gs.p5]}>
