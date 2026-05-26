@@ -1,11 +1,13 @@
-import privateAPI from "../privateAPI";
+import { sendSecureRequest } from "../privateAPI";
 import { APIResponse } from "../type";
 import { BattleUnit } from "./type";
 
 const PathURL = 'api/v1/battle';
 
 export const battleGetPlayerTeamUnits = async (playerTeamID: string): Promise<APIResponse<BattleUnit[]>> => {
-    const response = await privateAPI.get<APIResponse<BattleUnit[]>>(`${PathURL}/player-team`, {
+    const response = await sendSecureRequest<APIResponse<BattleUnit[]>>({
+        method: 'GET',
+        url: `${PathURL}/player-team`,
         params: {
             playerTeamID: playerTeamID
         }
@@ -14,7 +16,9 @@ export const battleGetPlayerTeamUnits = async (playerTeamID: string): Promise<AP
 }
 
 export const battleGetRandomEnemyBattleUnits = async (levels: number[], evoLevels: number[]): Promise<APIResponse<BattleUnit[]>> => {
-    const response = await privateAPI.get<APIResponse<BattleUnit[]>>(`${PathURL}/unit-random`, {
+    const response = await sendSecureRequest<APIResponse<BattleUnit[]>>({
+        method: 'GET',
+        url: `${PathURL}/unit-random`,
         params: {
             levels: levels,
             evoLevels: evoLevels

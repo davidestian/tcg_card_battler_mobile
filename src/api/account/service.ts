@@ -1,15 +1,23 @@
-import privateAPI from "../privateAPI";
+import { sendSecureRequest } from "../privateAPI";
 import { APIResponse } from "../type";
 import { GetAccountDetailResponse, PutAccountGoldRQ } from "./type";
 
 const PathURL = 'api/v1/account';
 
 export const getUserDetail = async (): Promise<APIResponse<GetAccountDetailResponse>> => {
-    const response = await privateAPI.get<APIResponse<GetAccountDetailResponse>>(`${PathURL}`);
+    const response = await sendSecureRequest<APIResponse<GetAccountDetailResponse>>({
+        method: 'GET',
+        url: PathURL
+    });
     return response.data;
-}
+};
 
 export const putAccountGold = async (rq: PutAccountGoldRQ): Promise<APIResponse> => {
-    const response = await privateAPI.put<APIResponse>(`${PathURL}/gold`, rq);
+
+    const response = await sendSecureRequest<APIResponse<GetAccountDetailResponse>>({
+        method: 'PUT',
+        url: `${PathURL}/gold`,
+        data: rq
+    });
     return response.data;
 }

@@ -45,7 +45,6 @@ export const getUnitCardImagePath = async (origin: string, code: string, type: n
                     n++
                 }
             }
-            console.log(`Failed to donwload image ${ASSET_BASE_URI}/${fileUri}`);
             return '';
         } catch (error: unknown) {
             // 2. Specific Error Catching
